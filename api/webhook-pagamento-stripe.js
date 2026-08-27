@@ -56,7 +56,7 @@ export default async function handler(req, res) {
           process.env.SUPABASE_SERVICE_ROLE_KEY
         );
 
-        await supabase.from('bookings').insert({
+        const { error: insertError } = await supabase.from('bookings').insert({
           dress_id: dressId,
           start_date: startDate,
           end_date: endDate,
@@ -65,6 +65,13 @@ export default async function handler(req, res) {
           payment_id: session.id,
           status: 'confirmada',
         });
+
+        if (insertError) {
+          // Agora esse erro aparece de verdade nos Logs do Vercel, mesmo
+          // a função respondendo 200 pro Stripe (o que sempre fazemos,
+          // pra evitar reenvios infinitos).
+          console.error('Erro ao inserir reserva no Supabase:', insertError);
+        }
       }
     }
     return res.status(200).json({ received: true });
